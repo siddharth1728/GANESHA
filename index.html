@@ -8,7 +8,7 @@
     <!-- Google Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Cinzel:wght@500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,600&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- Modular Master Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
@@ -22,26 +22,41 @@
     <div class="cinema-overlay"></div>
     <div id="divine-flash"></div>
 
+    <!-- Grand Sacred Handwritten Opening Prologue Screen -->
+    <div id="prologue-container" class="prologue-container">
+        <div class="prologue-card">
+            <div class="prologue-ornament">✦ ॐ गं गणपतये नमः ✦</div>
+            <div class="prologue-subornament">ON THIS AUSPICIOUS OCCASION</div>
+            <div id="prologue-quote" class="prologue-quote"></div>
+            <div class="prologue-footer">
+                <button id="skip-prologue-btn" class="skip-prologue-btn" title="Click to begin Ganesha Darshan immediately">
+                    <span>Enter Sacred Darshan</span>
+                    <span class="btn-arrow">✦</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Minimal Subtle Sacred Sound Indicator & Mute Toggle -->
-    <button id="sound-badge" class="sound-badge" title="Deva Shree Ganesha — Click to Mute">
+    <button id="sound-badge" class="sound-badge awaiting-interaction" title="Deva Shree Ganesha — Click to Play">
         <span class="sound-wave">
             <span class="bar bar1"></span>
             <span class="bar bar2"></span>
             <span class="bar bar3"></span>
         </span>
-        <span class="sound-label">Deva Shree Ganesha</span>
+        <span class="sound-label">Tap for Music</span>
     </button>
 
     <!-- Bangaram Personal Devotional Message Card — Second Half Right Placement -->
     <div id="message-container">
         <div class="message-card">
             <div class="card-ornament">✦ ✧ ✦</div>
-            <h1 class="message-title" id="t1">Happy Ganesh Chaturthi, Bangaram <span class="heart-icon">❤️</span></h1>
-            <p class="message-paragraph" id="p1">May Lord Ganesha remove every obstacle from your path, fill your heart with peace, and guide you toward everything you dream of.</p>
-            <p class="message-paragraph" id="p2">May your life always be surrounded by happiness, beautiful moments, strength, and people who love you deeply.</p>
-            <p class="message-paragraph" id="p3">I didn't want to just wish you this Ganesh Chaturthi. I wanted to create something beautiful for you, one little piece at a time. <span class="heart-icon">❤️</span></p>
-            <p class="message-paragraph" id="p4">Because you mean more to me than I can put into a simple wish.</p>
-            <div class="message-signature" id="sig">For my Bangaram. <span class="heart-icon">❤️</span></div>
+            <h1 class="message-title" id="t1"></h1>
+            <p class="message-paragraph" id="p1"></p>
+            <p class="message-paragraph" id="p2"></p>
+            <p class="message-paragraph" id="p3"></p>
+            <p class="message-paragraph" id="p4"></p>
+            <div class="message-signature" id="sig"></div>
         </div>
     </div>
 

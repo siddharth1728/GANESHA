@@ -33,10 +33,147 @@ class CinematicExperience {
         this.revealedFullBell = false;
         this.revealedAartiBell = false;
         this.messageShown = false;
+        this.prologueFinished = false;
 
         this.bindEvents();
         this.resize();
-        this.startLoop();
+        this.render(0, 0);
+        this.runPrologueSequence();
+    }
+
+    startPrologueAmbientLoop() {
+        const ambientStep = (timestamp) => {
+            if (this.prologueFinished) return;
+            this.render(timestamp, 0);
+            requestAnimationFrame(ambientStep);
+        };
+        requestAnimationFrame(ambientStep);
+    }
+
+    async runPrologueSequence() {
+        this.startPrologueAmbientLoop();
+
+        const quoteContainer = document.getElementById('prologue-quote');
+        const prologueOverlay = document.getElementById('prologue-container');
+        const skipBtn = document.getElementById('skip-prologue-btn');
+
+        let skipped = false;
+
+        const completePrologue = () => {
+            if (this.prologueFinished) return;
+            this.prologueFinished = true;
+            skipped = true;
+
+            const flash = document.getElementById('divine-flash');
+            if (flash) {
+                flash.style.opacity = '0.5';
+                setTimeout(() => { flash.style.opacity = '0'; }, 1000);
+            }
+
+            if (prologueOverlay) {
+                prologueOverlay.classList.add('fade-out');
+                setTimeout(() => {
+                    prologueOverlay.remove();
+                }, 1600);
+            }
+
+            // Start master Ganesha emergence animation
+            this.startTime = null;
+            this.startLoop();
+        };
+
+        if (skipBtn) {
+            skipBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                completePrologue();
+            });
+        }
+
+        if (!quoteContainer) {
+            completePrologue();
+            return;
+        }
+
+        quoteContainer.innerHTML = '';
+
+        const quoteLines = [
+            {
+                text: 'On this auspicious day of Ganesh Chaturthi,',
+                baseDelay: 46,
+                pauseAfter: 500
+            },
+            {
+                text: 'as sacred prayers rise and divine grace descends upon the earth,',
+                baseDelay: 44,
+                pauseAfter: 550
+            },
+            {
+                text: 'may Lord Ganesha remove every obstacle from your path,',
+                baseDelay: 44,
+                pauseAfter: 550
+            },
+            {
+                text: 'and bless your life with boundless peace, eternal strength, and infinite joy.',
+                baseDelay: 44,
+                pauseAfter: 750
+            },
+            {
+                text: 'Dedicated with all my love, for my Bangaram ',
+                suffix: '<span class="heart-icon">❤️</span>',
+                isDedication: true,
+                baseDelay: 50,
+                pauseAfter: 1500
+            }
+        ];
+
+        // Create glowing golden cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'typing-cursor';
+
+        // Brief 1.0s breath before first handwritten stroke
+        await new Promise(r => setTimeout(r, 1000));
+
+        for (let i = 0; i < quoteLines.length; i++) {
+            if (skipped) break;
+            const item = quoteLines[i];
+            const lineEl = document.createElement('div');
+            lineEl.className = 'quote-line' + (item.isDedication ? ' quote-dedication' : '');
+            quoteContainer.appendChild(lineEl);
+            lineEl.classList.add('show');
+            lineEl.appendChild(cursor);
+
+            let currentText = '';
+            for (let c = 0; c < item.text.length; c++) {
+                if (skipped) break;
+                const char = item.text[c];
+                currentText += char;
+                lineEl.textContent = currentText;
+                lineEl.appendChild(cursor);
+
+                // Natural human handwriting cadence
+                let delay = item.baseDelay + (Math.random() * 12 - 6);
+                if (char === ',' || char === ';') delay += 160;
+                else if (char === '.' || char === '!' || char === '?') delay += 260;
+
+                await new Promise(r => setTimeout(r, Math.max(10, delay)));
+            }
+
+            if (item.suffix && !skipped) {
+                cursor.remove();
+                lineEl.innerHTML = currentText + item.suffix;
+                lineEl.appendChild(cursor);
+            }
+
+            if (!skipped && item.pauseAfter) {
+                await new Promise(r => setTimeout(r, item.pauseAfter));
+            }
+        }
+
+        if (!skipped) {
+            // Serene peaceful hold after typing (~4.5 seconds to reach ~23 seconds total)
+            await new Promise(r => setTimeout(r, 4500));
+            completePrologue();
+        }
     }
 
     resize() {
@@ -62,8 +199,8 @@ class CinematicExperience {
         if (soundBadge) {
             soundBadge.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!this.audio.isStarted) {
-                    this.audio.init();
+                if (!this.audio.isPlaying) {
+                    this.audio.play().catch(() => {});
                 } else {
                     this.audio.toggleMute();
                 }
@@ -110,7 +247,7 @@ class CinematicExperience {
         ctx.restore();
     }
 
-    triggerMessageSequence() {
+    async triggerMessageSequence() {
         if (this.messageShown) return;
         this.messageShown = true;
 
@@ -120,21 +257,132 @@ class CinematicExperience {
         const container = document.getElementById('message-container');
         if (container) container.classList.add('visible');
 
-        // Staggered sequential reveals
-        setTimeout(() => { const el = document.getElementById('t1'); if (el) el.classList.add('show'); }, 600);
-        setTimeout(() => { const el = document.getElementById('p1'); if (el) el.classList.add('show'); }, 2200);
-        setTimeout(() => { const el = document.getElementById('p2'); if (el) el.classList.add('show'); }, 4400);
+        const card = document.querySelector('.message-card');
+        let skipTyping = false;
+
+        // Allow tapping/clicking the card to quickly fast-forward typing if desired
+        const handleCardClick = () => {
+            skipTyping = true;
+        };
+        if (card) {
+            card.addEventListener('click', handleCardClick, { once: true });
+        }
+
+        const script = [
+            {
+                id: 't1',
+                text: 'Happy Ganesh Chaturthi, Bangaram ',
+                suffix: '<span class="heart-icon">❤️</span>',
+                baseDelay: 38,
+                pauseAfter: 550
+            },
+            {
+                id: 'p1',
+                text: 'May Lord Ganesha remove every obstacle from your path, fill your heart with peace, and guide you toward everything you dream of.',
+                suffix: '',
+                baseDelay: 20,
+                pauseAfter: 450
+            },
+            {
+                id: 'p2',
+                text: 'May your life always be surrounded by happiness, beautiful moments, strength, and people who love you deeply.',
+                suffix: '',
+                baseDelay: 20,
+                pauseAfter: 500
+            },
+            {
+                id: 'p3',
+                text: "I didn't want to just wish you this Ganesh Chaturthi. I wanted to create something beautiful for you, one little piece at a time. ",
+                suffix: '<span class="heart-icon">❤️</span>',
+                baseDelay: 22,
+                pauseAfter: 600,
+                onStart: () => this.audio.duckMusic(0.02, 2500)
+            },
+            {
+                id: 'p4',
+                text: 'Because you mean more to me than I can put into a simple wish.',
+                suffix: '',
+                baseDelay: 25,
+                pauseAfter: 700
+            },
+            {
+                id: 'sig',
+                text: 'For my Bangaram. ',
+                suffix: '<span class="heart-icon">❤️</span>',
+                baseDelay: 42,
+                pauseAfter: 1200,
+                onStart: () => this.audio.duckMaster(0.012, 3000)
+            }
+        ];
+
+        // Ensure all elements are clean initially so nothing is pre-typed
+        script.forEach(item => {
+            const el = document.getElementById(item.id);
+            if (el) {
+                el.innerHTML = '';
+                el.classList.remove('show');
+            }
+        });
+
+        // Gentle pause for card slide-in transition before first letter types
+        await new Promise(r => setTimeout(r, 900));
+
+        // Create glowing golden caret/cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'typing-cursor';
+
+        for (let i = 0; i < script.length; i++) {
+            const item = script[i];
+            const el = document.getElementById(item.id);
+            if (!el) continue;
+
+            if (item.onStart) item.onStart();
+            el.classList.add('show');
+            el.appendChild(cursor);
+
+            if (skipTyping) {
+                el.innerHTML = item.text + item.suffix;
+                continue;
+            }
+
+            let typed = '';
+            for (let c = 0; c < item.text.length; c++) {
+                if (skipTyping) {
+                    typed = item.text;
+                    el.textContent = typed;
+                    break;
+                }
+
+                const char = item.text[c];
+                typed += char;
+                el.textContent = typed;
+                el.appendChild(cursor);
+
+                // Natural human typing rhythm with natural punctuation pauses
+                let delay = item.baseDelay + (Math.random() * 14 - 7);
+                if (char === ',' || char === ';') delay += 150;
+                else if (char === '.' || char === '!' || char === '?') delay += 220;
+
+                await new Promise(r => setTimeout(r, Math.max(10, delay)));
+            }
+
+            // Reveal heart icon with pop animation if line has suffix
+            if (item.suffix) {
+                cursor.remove();
+                el.innerHTML = typed + item.suffix;
+                el.appendChild(cursor);
+            }
+
+            if (!skipTyping && item.pauseAfter) {
+                await new Promise(r => setTimeout(r, item.pauseAfter));
+            }
+        }
+
+        // Linger briefly at the end of the dedication, then fade out cursor gracefully
         setTimeout(() => {
-            const el = document.getElementById('p3');
-            if (el) el.classList.add('show');
-            this.audio.duckMusic(0.02, 2500); // Intimate reverence for personal lines
-        }, 6800);
-        setTimeout(() => { const el = document.getElementById('p4'); if (el) el.classList.add('show'); }, 9200);
-        setTimeout(() => {
-            const el = document.getElementById('sig');
-            if (el) el.classList.add('show');
-            this.audio.duckMaster(0.012, 3000); // Near-silent reverence for "For my Bangaram. ❤️"
-        }, 11600);
+            cursor.classList.add('fade-out');
+            setTimeout(() => cursor.remove(), 1000);
+        }, 2000);
     }
 
     render(globalTime, timelinePos) {

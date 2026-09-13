@@ -9,13 +9,11 @@ export class SacredAudioEngine {
     constructor() {
         this.ctx = null;
         this.isStarted = false;
+        this.isPlaying = false;
         this.isMuted = false;
 
-        // Mixer Channel Nodes
-        this.masterCompressor = null;
-        this.masterGain = null;
-        this.musicGain = null;
-        this.bellsGain = null;
+        // Volume fade state
+        this.volumeFadeInterval = null;
 
         // Dedicated Sacred Song: Deva Shree Ganesha
         this.track = {
@@ -26,7 +24,6 @@ export class SacredAudioEngine {
         };
 
         this.audioEl = null;
-        this.mediaSourceNode = null;
 
         // Calibrated Safety Volume Levels (Subtle devotional background atmosphere, never loud)
         this.LEVELS = {
@@ -35,126 +32,141 @@ export class SacredAudioEngine {
             BELLS_BASE: 0.045     // 4.5% soft crystal chime
         };
 
+        this.setupAudioElement();
         this.initAutoListeners();
     }
 
     /**
-     * Seamless automatic playback: ensures music starts entirely on its own
+     * Setup HTML5 Audio element for direct, reliable hardware playback across all browsers & CDNs
      */
-    initAutoListeners() {
-        const tryAutoPlay = () => {
-            this.init();
-            window.removeEventListener('pointerdown', tryAutoPlay);
-            window.removeEventListener('touchstart', tryAutoPlay);
-            window.removeEventListener('scroll', tryAutoPlay);
-            window.removeEventListener('keydown', tryAutoPlay);
-            window.removeEventListener('click', tryAutoPlay);
-        };
-
-        window.addEventListener('pointerdown', tryAutoPlay, { passive: true });
-        window.addEventListener('touchstart', tryAutoPlay, { passive: true });
-        window.addEventListener('scroll', tryAutoPlay, { passive: true });
-        window.addEventListener('keydown', tryAutoPlay, { passive: true });
-        window.addEventListener('click', tryAutoPlay, { passive: true });
-
-        // Immediate automatic load attempt
-        setTimeout(() => {
-            this.init();
-        }, 200);
-    }
-
-    /**
-     * Initialize Audio Context & Play Deva Shree Ganesha
-     */
-    init() {
-        if (this.isStarted && this.audioEl) {
-            if (this.audioEl.paused) {
-                this.audioEl.play().catch(() => {});
-            }
-            return;
-        }
-
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-
-            // 1. Dynamics Compressor for clean, soft limiting
-            this.masterCompressor = this.ctx.createDynamicsCompressor();
-            this.masterCompressor.threshold.setValueAtTime(-18, this.ctx.currentTime);
-            this.masterCompressor.knee.setValueAtTime(12, this.ctx.currentTime);
-            this.masterCompressor.ratio.setValueAtTime(4, this.ctx.currentTime);
-            this.masterCompressor.attack.setValueAtTime(0.01, this.ctx.currentTime);
-            this.masterCompressor.release.setValueAtTime(0.3, this.ctx.currentTime);
-            this.masterCompressor.connect(this.ctx.destination);
-
-            // 2. Master Gain
-            this.masterGain = this.ctx.createGain();
-            this.masterGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-            this.masterGain.gain.linearRampToValueAtTime(this.LEVELS.MASTER_CEILING, this.ctx.currentTime + 1.8);
-            this.masterGain.connect(this.masterCompressor);
-
-            // 3. Music Bus (Locked at subtle background level)
-            this.musicGain = this.ctx.createGain();
-            this.musicGain.gain.setValueAtTime(this.LEVELS.MUSIC_BASE, this.ctx.currentTime);
-            this.musicGain.connect(this.masterGain);
-
-            // 4. Temple Bells Bus
-            this.bellsGain = this.ctx.createGain();
-            this.bellsGain.gain.setValueAtTime(this.LEVELS.BELLS_BASE, this.ctx.currentTime);
-            this.bellsGain.connect(this.masterGain);
-
-            // 5. Audio Element Setup
-            this.setupAudioElement();
-
-            this.isStarted = true;
-            this.updateSoundBadge();
-        } catch (e) {
-            console.warn("Audio Context init note:", e);
-            this.setupAudioElement(true);
-        }
-    }
-
-    setupAudioElement(fallbackDirect = false) {
+    setupAudioElement() {
         if (!this.audioEl) {
             this.audioEl = new Audio();
             this.audioEl.loop = true;
-            this.audioEl.crossOrigin = 'anonymous';
             this.audioEl.preload = 'auto';
+            // Note: crossOrigin is intentionally omitted for local assets to avoid CORS issues on Vercel/CDNs
             this.audioEl.src = this.track.src;
             this.audioEl.volume = this.LEVELS.MUSIC_BASE;
 
-            if (!fallbackDirect && this.ctx) {
-                try {
-                    this.mediaSourceNode = this.ctx.createMediaElementSource(this.audioEl);
-                    this.mediaSourceNode.connect(this.musicGain);
-                } catch (e) {
-                    console.warn("Direct audio fallback:", e);
-                }
-            }
-        }
-
-        if (this.ctx && this.ctx.state === 'suspended') {
-            this.ctx.resume().catch(() => {});
-        }
-
-        const playPromise = this.audioEl.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
+            this.audioEl.addEventListener('play', () => {
+                this.isPlaying = true;
+                this.isStarted = true;
                 this.updateSoundBadge();
-            }).catch(() => {
-                // Browser waiting for passive gesture
+            });
+
+            this.audioEl.addEventListener('pause', () => {
+                this.isPlaying = false;
+                this.updateSoundBadge();
+            });
+
+            this.audioEl.addEventListener('ended', () => {
+                this.isPlaying = false;
+                this.updateSoundBadge();
+            });
+
+            this.audioEl.addEventListener('error', (e) => {
+                console.warn("Audio element playback note:", e);
             });
         }
     }
 
+    /**
+     * Ensure Web Audio context is initialized and resumed for harmonic temple bells
+     */
+    ensureAudioContext() {
+        if (!this.ctx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                try {
+                    this.ctx = new AudioContextClass();
+                } catch (e) {
+                    console.warn("AudioContext note:", e);
+                }
+            }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+        }
+    }
+
+    /**
+     * Seamless automatic playback: attempts immediate autoplay and sets up passive interaction fallback
+     */
+    initAutoListeners() {
+        const unlockAndPlay = async () => {
+            try {
+                await this.play();
+                removeListeners();
+            } catch (e) {
+                // Keep listeners until first successful user interaction
+            }
+        };
+
+        const events = ['pointerdown', 'touchstart', 'click', 'keydown', 'scroll'];
+        const removeListeners = () => {
+            events.forEach(evt => window.removeEventListener(evt, unlockAndPlay));
+        };
+
+        events.forEach(evt => window.addEventListener(evt, unlockAndPlay, { passive: true }));
+
+        // Immediate automatic load attempt
+        setTimeout(() => {
+            this.play().then(() => {
+                removeListeners();
+            }).catch(() => {
+                // Browser Autoplay Policy blocked immediate playback; waiting for earliest user interaction
+                this.updateSoundBadge();
+            });
+        }, 150);
+    }
+
+    /**
+     * Start / Resume audio playback
+     */
+    async play() {
+        this.setupAudioElement();
+        this.ensureAudioContext();
+
+        if (this.isMuted) {
+            this.isMuted = false;
+            this.audioEl.muted = false;
+        }
+
+        try {
+            const promise = this.audioEl.play();
+            if (promise !== undefined) {
+                await promise;
+            }
+            this.isPlaying = true;
+            this.isStarted = true;
+            this.updateSoundBadge();
+            return true;
+        } catch (err) {
+            this.isPlaying = false;
+            this.updateSoundBadge();
+            throw err;
+        }
+    }
+
+    /**
+     * Backwards-compatible init entry point
+     */
+    init() {
+        return this.play().catch(() => {});
+    }
+
+    /**
+     * Toggle sound mute/unmute
+     */
     toggleMute() {
+        // If not playing yet, clicking toggles music on
+        if (!this.isPlaying && !this.isStarted) {
+            this.play().catch(() => {});
+            return;
+        }
+
         this.isMuted = !this.isMuted;
-        if (this.masterGain && this.ctx) {
-            const now = this.ctx.currentTime;
-            this.masterGain.gain.cancelScheduledValues(now);
-            this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-            this.masterGain.gain.linearRampToValueAtTime(this.isMuted ? 0.0001 : this.LEVELS.MASTER_CEILING, now + 0.3);
-        } else if (this.audioEl) {
+        if (this.audioEl) {
             this.audioEl.muted = this.isMuted;
         }
         this.updateSoundBadge();
@@ -164,34 +176,58 @@ export class SacredAudioEngine {
      * Dynamic Audio Ducking during sacred intimate moments
      */
     duckMusic(targetLevel, fadeMs = 1800) {
-        if (!this.ctx || !this.musicGain) {
-            if (this.audioEl) {
-                this.audioEl.volume = Math.max(0.01, Math.min(this.LEVELS.MUSIC_BASE, targetLevel));
-            }
-            return;
-        }
-        const now = this.ctx.currentTime;
-        const targetVal = Math.max(0.01, Math.min(this.LEVELS.MUSIC_BASE, targetLevel));
-        this.musicGain.gain.cancelScheduledValues(now);
-        this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
-        this.musicGain.gain.linearRampToValueAtTime(targetVal, now + (fadeMs / 1000));
+        const clampedTarget = Math.max(0.005, Math.min(this.LEVELS.MUSIC_BASE, targetLevel));
+        this.fadeVolume(clampedTarget, fadeMs);
     }
 
     duckMaster(targetLevel, fadeMs = 2500) {
-        if (!this.ctx || !this.masterGain) return;
-        const now = this.ctx.currentTime;
-        const targetVal = Math.max(0.005, Math.min(this.LEVELS.MASTER_CEILING, targetLevel));
-        this.masterGain.gain.cancelScheduledValues(now);
-        this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-        this.masterGain.gain.exponentialRampToValueAtTime(targetVal, now + (fadeMs / 1000));
+        const clampedTarget = Math.max(0.002, Math.min(this.LEVELS.MASTER_CEILING, targetLevel));
+        this.fadeVolume(clampedTarget, fadeMs);
+    }
+
+    fadeVolume(targetVolume, fadeMs = 1800) {
+        if (!this.audioEl) return;
+        if (this.volumeFadeInterval) {
+            clearInterval(this.volumeFadeInterval);
+            this.volumeFadeInterval = null;
+        }
+
+        const startVol = this.audioEl.volume;
+        const startTime = performance.now();
+        const duration = Math.max(100, fadeMs);
+
+        this.volumeFadeInterval = setInterval(() => {
+            const elapsed = performance.now() - startTime;
+            const progress = Math.min(1.0, elapsed / duration);
+
+            // Smooth cosine easing for gentle organic volume transition
+            const ease = 0.5 - 0.5 * Math.cos(progress * Math.PI);
+            const newVol = startVol + (targetVolume - startVol) * ease;
+
+            if (this.audioEl) {
+                this.audioEl.volume = Math.max(0, Math.min(1, newVol));
+            }
+
+            if (progress >= 1.0) {
+                clearInterval(this.volumeFadeInterval);
+                this.volumeFadeInterval = null;
+            }
+        }, 25);
     }
 
     /**
      * Soft Harmonic Temple Bell (marking sacred visual reveals)
      */
     playTempleBell(freq = 554.37, duration = 4.0, volume = 0.28) {
-        if (!this.ctx || !this.isStarted || this.isMuted) return;
+        if (this.isMuted) return;
+        this.ensureAudioContext();
+        if (!this.ctx) return;
+
         try {
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+
             const now = this.ctx.currentTime;
             const osc = this.ctx.createOscillator();
             const oscHarmonic = this.ctx.createOscillator();
@@ -207,27 +243,44 @@ export class SacredAudioEngine {
             filter.frequency.setValueAtTime(freq * 1.5, now);
             filter.Q.value = 5.0;
 
-            gain.gain.setValueAtTime(volume, now);
+            const safeVol = Math.min(volume, 0.4) * (this.LEVELS.BELLS_BASE / 0.045);
+            gain.gain.setValueAtTime(safeVol, now);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
             osc.connect(gain);
             oscHarmonic.connect(gain);
-            gain.connect(this.bellsGain);
+            gain.connect(filter);
+            filter.connect(this.ctx.destination);
 
             osc.start(now);
             oscHarmonic.start(now);
             osc.stop(now + duration + 0.1);
             oscHarmonic.stop(now + duration + 0.1);
         } catch (e) {
-            // Non-critical catch
+            // Non-critical bell chime catch
         }
     }
 
     updateSoundBadge() {
         const badge = document.getElementById('sound-badge');
-        if (badge) {
-            badge.classList.toggle('muted', this.isMuted);
-            badge.title = this.isMuted ? 'Sound Muted — Click to Unmute' : 'Deva Shree Ganesha Playing — Click to Mute';
+        if (!badge) return;
+
+        const label = badge.querySelector('.sound-label');
+
+        badge.classList.remove('playing', 'muted', 'awaiting-interaction');
+
+        if (this.isMuted) {
+            badge.classList.add('muted');
+            badge.title = 'Sound Muted — Click to Unmute';
+            if (label) label.textContent = 'Muted';
+        } else if (this.isPlaying) {
+            badge.classList.add('playing');
+            badge.title = 'Deva Shree Ganesha Playing — Click to Mute';
+            if (label) label.textContent = 'Deva Shree Ganesha';
+        } else {
+            badge.classList.add('awaiting-interaction');
+            badge.title = 'Click anywhere or tap here to play sacred music';
+            if (label) label.textContent = 'Tap for Music';
         }
     }
 }
