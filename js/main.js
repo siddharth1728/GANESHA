@@ -395,8 +395,8 @@ class CinematicExperience {
         // Mobile portrait: Centered with natural vertical reflow
         const isDesktop = (w >= 920 && (w / h) > 1.05);
         const cx = isDesktop ? w * 0.255 : w * 0.5;
-        const cy = isDesktop ? h * 0.50 : (h < w ? h * 0.35 : h * 0.32);
-        const baseDim = isDesktop ? Math.min(w * 0.44, h * 0.84) : Math.min(w * 0.85, h * 0.52);
+        const cy = isDesktop ? h * 0.50 : (h < w ? h * 0.35 : Math.max(160, Math.min(h * 0.30, 260)));
+        const baseDim = isDesktop ? Math.min(w * 0.44, h * 0.84) : Math.min(w * 0.80, h * 0.46, 310);
         const scale = (baseDim / 185);
 
         // 1. Background Fill & Aura
