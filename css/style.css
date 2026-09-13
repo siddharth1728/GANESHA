@@ -1,0 +1,334 @@
+/* ==========================================================================
+   PROJECT GANESHA — FESTIVAL WORLD (MASTER STYLES)
+   An Intimate Ganesh Chaturthi Celebration for Bangaram ❤️
+   ========================================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #030104;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    color: #fcefd6;
+}
+
+#canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Ambient Festive Vignette & Depth */
+.cinema-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(circle at 28% 50%, rgba(255, 170, 40, 0.05) 0%, rgba(2, 1, 4, 0.3) 55%, rgba(0, 0, 1, 0.94) 100%);
+    box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.96);
+}
+
+/* ==========================================================================
+   BANGARAM PERSONAL DEVOTIONAL MESSAGE CARD
+   Spacious Second-Half Right Side Editorial Composition (45–50% horizontal space)
+   ========================================================================== */
+#message-container {
+    position: fixed;
+    top: 50%;
+    right: 3.5%;
+    left: auto;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: min(46vw, 840px);
+    max-width: 840px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 2.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#message-container.visible {
+    opacity: 1;
+}
+
+.message-card {
+    width: 100%;
+    background: linear-gradient(175deg, rgba(26, 14, 8, 0.94) 0%, rgba(10, 5, 2, 0.98) 100%);
+    border: 1.5px solid rgba(212, 175, 55, 0.5);
+    border-radius: 26px;
+    padding: 48px 56px 44px 56px;
+    backdrop-filter: blur(36px);
+    -webkit-backdrop-filter: blur(36px);
+    box-shadow: 
+        0 28px 72px rgba(0, 0, 0, 0.96), 
+        0 0 52px rgba(212, 175, 55, 0.22), 
+        inset 0 1px 2px rgba(255, 235, 170, 0.4);
+    position: relative;
+    transform: translateX(28px);
+    transition: transform 2.0s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#message-container.visible .message-card {
+    transform: translateX(0);
+}
+
+.card-ornament {
+    display: block;
+    margin: 0 auto 20px auto;
+    font-size: 16px;
+    letter-spacing: 12px;
+    color: #ffd778;
+    text-shadow: 0 0 14px rgba(255, 215, 120, 0.6);
+}
+
+/* Master Title — Grand, Sacred & Dominant */
+.message-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.95rem, 2.7vw, 2.85rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #fff6e0;
+    text-shadow: 0 0 28px rgba(243, 203, 105, 0.6), 0 2px 5px rgba(0, 0, 0, 0.85);
+    margin-bottom: 26px;
+    line-height: 1.24;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1.6s ease, transform 1.6s ease;
+}
+
+.message-title.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.heart-icon {
+    display: inline-block;
+    color: #e63946;
+    animation: pulse-heart 2s infinite ease-in-out;
+    transform-origin: center;
+}
+
+@keyframes pulse-heart {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 3px #e63946); }
+    50% { transform: scale(1.18); filter: drop-shadow(0 0 10px #ff4d6d); }
+}
+
+/* Devotional Body Paragraphs — Spacious, Highly Readable & Warm */
+.message-paragraph {
+    font-size: clamp(1.18rem, 1.45vw, 1.45rem);
+    line-height: 1.76;
+    color: #f7eedc;
+    font-weight: 400;
+    margin-bottom: 18px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 1.6s ease, transform 1.6s ease;
+}
+
+.message-paragraph.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Final Intimate Dedication Signature */
+.message-signature {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.45rem, 1.9vw, 1.85rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #ffd778;
+    text-shadow: 0 0 20px rgba(255, 215, 120, 0.55);
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(212, 175, 55, 0.38);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 2.0s ease, transform 2.0s ease;
+}
+
+.message-signature.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   MINIMAL SACRED SOUND BADGE & MUTE TOGGLE (ZERO DEVELOPER CLUTTER)
+   ========================================================================== */
+.sound-badge {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(22, 12, 7, 0.65);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    cursor: pointer;
+    color: #ffd778;
+    outline: none;
+    transition: all 0.3s ease;
+    opacity: 0.65;
+}
+
+.sound-badge:hover {
+    opacity: 1;
+    border-color: rgba(255, 215, 120, 0.7);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+}
+
+.sound-badge.muted {
+    opacity: 0.4;
+    filter: grayscale(0.8);
+}
+
+.sound-wave {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 14px;
+}
+
+.sound-wave .bar {
+    width: 2.5px;
+    background: #ffd778;
+    border-radius: 2px;
+    animation: sound-eq 1.2s infinite ease-in-out;
+}
+
+.sound-badge.muted .sound-wave .bar {
+    animation: none;
+    height: 3px !important;
+}
+
+.sound-wave .bar1 { height: 6px; animation-delay: 0.1s; }
+.sound-wave .bar2 { height: 13px; animation-delay: 0.3s; }
+.sound-wave .bar3 { height: 8px; animation-delay: 0.2s; }
+
+@keyframes sound-eq {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+    50% { transform: scaleY(1.0); opacity: 1; filter: drop-shadow(0 0 4px #ffd778); }
+}
+
+.sound-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #fcefd6;
+}
+
+/* Divine Bloom Flash */
+#divine-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 235, 170, 0.45) 0%, rgba(212, 175, 55, 0) 70%);
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.9s ease-out;
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT SPECIFICATIONS (DESKTOP / TABLET / MOBILE)
+   ========================================================================== */
+
+/* Tablet & Intermediate Screens (scale proportionally) */
+@media (max-width: 1200px) and (min-width: 901px) {
+    #message-container {
+        width: 48vw;
+        right: 2.5%;
+    }
+    .message-card {
+        padding: 34px 38px 30px 38px;
+    }
+}
+
+/* Mobile & Portrait Screens (Natural Vertical Flow) */
+@media (max-width: 900px), (max-aspect-ratio: 1/1) {
+    body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #message-container {
+        position: relative;
+        top: auto;
+        bottom: auto;
+        right: auto;
+        left: auto;
+        transform: none;
+        width: 100%;
+        padding: 58vh 18px 40px 18px; /* Breathing room below Ganesha */
+        pointer-events: auto;
+    }
+    .message-card {
+        max-width: 580px;
+        margin: 0 auto;
+        padding: 26px 24px 22px 24px;
+        border-radius: 18px;
+        transform: translateY(18px);
+    }
+    #message-container.visible .message-card {
+        transform: translateY(0);
+    }
+    .card-ornament {
+        margin-bottom: 12px;
+        font-size: 13px;
+        letter-spacing: 7px;
+    }
+    .message-title {
+        font-size: 1.45rem;
+        margin-bottom: 14px;
+    }
+    .message-paragraph {
+        font-size: 1.05rem;
+        line-height: 1.55;
+        margin-bottom: 12px;
+    }
+    .message-signature {
+        font-size: 1.25rem;
+        margin-top: 16px;
+        padding-top: 12px;
+    }
+    .sound-badge {
+        top: 12px;
+        right: 14px;
+        padding: 5px 10px;
+    }
+    .sound-label {
+        font-size: 9px;
+    }
+}
